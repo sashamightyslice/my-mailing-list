@@ -1,290 +1,200 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Join Our Mailing List</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        
-        .form-container {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-            max-width: 400px;
-            width: 100%;
-            transform: translateY(0);
-            transition: all 0.3s ease;
-        }
-        
-        .form-container:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-        }
-        
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 28px;
-            font-weight: 700;
-        }
-        
-        .subtitle {
-            text-align: center;
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 16px;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-            position: relative;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: #555;
-            font-weight: 600;
-            font-size: 14px;
-        }
-        
-        input[type="text"],
-        input[type="email"] {
-            width: 100%;
-            padding: 15px;
-            border: 2px solid #e1e5e9;
-            border-radius: 10px;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            background: #f8f9fa;
-        }
-        
-        input[type="text"]:focus,
-        input[type="email"]:focus {
-            outline: none;
-            border-color: #667eea;
-            background: white;
-            transform: scale(1.02);
-        }
-        
-        .submit-btn {
-            width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 18px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        .submit-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-        }
-        
-        .submit-btn:active {
-            transform: translateY(0);
-        }
-        
-        .success-message {
-            display: none;
-            text-align: center;
-            color: #28a745;
-            font-weight: 600;
-            margin-top: 20px;
-            padding: 15px;
-            background: rgba(40, 167, 69, 0.1);
-            border-radius: 10px;
-            border: 2px solid rgba(40, 167, 69, 0.3);
-        }
-        
-        .error-message {
-            display: none;
-            text-align: center;
-            color: #dc3545;
-            font-weight: 600;
-            margin-top: 20px;
-            padding: 15px;
-            background: rgba(220, 53, 69, 0.1);
-            border-radius: 10px;
-            border: 2px solid rgba(220, 53, 69, 0.3);
-        }
-        
-        @media (max-width: 480px) {
-            .form-container {
-                padding: 30px 20px;
-            }
-            
-            h1 {
-                font-size: 24px;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="form-container">
-        <h1>📧 Join Our List</h1>
-        <p class="subtitle">Stay updated with our weekly newsletter</p>
-        
-        <form id="mailingListForm">
-            <div class="form-group">
-                <label for="name">Your Name</label>
-                <input type="text" id="name" name="name" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="email">Email Address</label>
-                <input type="email" id="email" name="email" required>
-            </div>
-            
-            <button type="submit" class="submit-btn">Subscribe Now</button>
-        </form>
-        
-        <div id="successMessage" class="success-message">
-            🎉 Thank you! You've been added to our mailing list.
-        </div>
-        
-        <div id="errorMessage" class="error-message">
-            ❌ Something went wrong. Please try again.
-        </div>
-    </div>
+#!/usr/bin/env python3
+"""
+Simple Mailing List Backend
+A basic script to manage subscribers and send emails
+"""
 
-    <script>
-        // Store subscribers in memory (for demo purposes)
-        let subscribers = JSON.parse(localStorage.getItem('subscribers') || '[]');
+import json
+import smtplib
+import csv
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from datetime import datetime
+import os
+
+class SimpleMailingList:
+    def __init__(self, data_file='subscribers.json'):
+        self.data_file = data_file
+        self.subscribers = self.load_subscribers()
+    
+    def load_subscribers(self):
+        """Load subscribers from JSON file"""
+        try:
+            with open(self.data_file, 'r') as f:
+                return json.load(f)
+        except FileNotFoundError:
+            return []
+    
+    def save_subscribers(self):
+        """Save subscribers to JSON file"""
+        with open(self.data_file, 'w') as f:
+            json.dump(self.subscribers, f, indent=2)
+    
+    def add_subscriber(self, name, email):
+        """Add a new subscriber"""
+        # Check if email already exists
+        for sub in self.subscribers:
+            if sub['email'].lower() == email.lower():
+                return False, "Email already subscribed"
         
-        document.getElementById('mailingListForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const name = document.getElementById('name').value.trim();
-            const email = document.getElementById('email').value.trim();
-            
-            // Basic validation
-            if (!name || !email) {
-                showMessage('error', 'Please fill in all fields.');
-                return;
-            }
-            
-            if (!isValidEmail(email)) {
-                showMessage('error', 'Please enter a valid email address.');
-                return;
-            }
-            
-            // Check if email already exists
-            if (subscribers.some(sub => sub.email.toLowerCase() === email.toLowerCase())) {
-                showMessage('error', 'This email is already subscribed.');
-                return;
-            }
-            
-            // Add subscriber
-            const subscriber = {
-                name: name,
-                email: email,
-                dateAdded: new Date().toISOString(),
-                id: Date.now()
-            };
-            
-            subscribers.push(subscriber);
-            localStorage.setItem('subscribers', JSON.stringify(subscribers));
-            
-            // Show success message
-            showMessage('success', 'Thank you! You\'ve been successfully added to our mailing list.');
-            
-            // Reset form
-            document.getElementById('mailingListForm').reset();
-            
-            // Log to console (for demo - in real app, send to server)
-            console.log('New subscriber:', subscriber);
-            console.log('Total subscribers:', subscribers.length);
-        });
-        
-        function showMessage(type, message) {
-            const successDiv = document.getElementById('successMessage');
-            const errorDiv = document.getElementById('errorMessage');
-            
-            // Hide both messages first
-            successDiv.style.display = 'none';
-            errorDiv.style.display = 'none';
-            
-            if (type === 'success') {
-                successDiv.textContent = message;
-                successDiv.style.display = 'block';
-            } else {
-                errorDiv.textContent = message;
-                errorDiv.style.display = 'block';
-            }
-            
-            // Hide message after 5 seconds
-            setTimeout(() => {
-                successDiv.style.display = 'none';
-                errorDiv.style.display = 'none';
-            }, 5000);
+        subscriber = {
+            'id': len(self.subscribers) + 1,
+            'name': name,
+            'email': email,
+            'date_added': datetime.now().isoformat(),
+            'active': True
         }
         
-        function isValidEmail(email) {
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            return emailRegex.test(email);
-        }
+        self.subscribers.append(subscriber)
+        self.save_subscribers()
+        return True, "Subscriber added successfully"
+    
+    def remove_subscriber(self, email):
+        """Remove a subscriber"""
+        self.subscribers = [sub for sub in self.subscribers if sub['email'].lower() != email.lower()]
+        self.save_subscribers()
+    
+    def get_active_subscribers(self):
+        """Get list of active subscribers"""
+        return [sub for sub in self.subscribers if sub.get('active', True)]
+    
+    def export_to_csv(self, filename='subscribers.csv'):
+        """Export subscribers to CSV"""
+        with open(filename, 'w', newline='') as csvfile:
+            fieldnames = ['name', 'email', 'date_added']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+            for sub in self.subscribers:
+                writer.writerow({
+                    'name': sub['name'],
+                    'email': sub['email'],
+                    'date_added': sub['date_added']
+                })
+    
+    def send_email(self, subject, message, smtp_server, smtp_port, username, password, from_email):
+        """Send email to all active subscribers"""
+        active_subs = self.get_active_subscribers()
         
-        // Function to export subscribers (for your use)
-        function exportSubscribers() {
-            const data = JSON.stringify(subscribers, null, 2);
-            const blob = new Blob([data], {type: 'application/json'});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'subscribers.json';
-            a.click();
-        }
+        if not active_subs:
+            print("No active subscribers found.")
+            return
         
-        // Add export button (hidden by default, can be shown for admin)
-        const exportBtn = document.createElement('button');
-        exportBtn.textContent = 'Export Subscribers (Admin)';
-        exportBtn.style.display = 'none';
-        exportBtn.onclick = exportSubscribers;
-        document.body.appendChild(exportBtn);
+        try:
+            # Connect to SMTP server
+            server = smtplib.SMTP(smtp_server, smtp_port)
+            server.starttls()
+            server.login(username, password)
+            
+            successful_sends = 0
+            failed_sends = 0
+            
+            for subscriber in active_subs:
+                try:
+                    # Create message
+                    msg = MIMEMultipart()
+                    msg['From'] = from_email
+                    msg['To'] = subscriber['email']
+                    msg['Subject'] = subject
+                    
+                    # Personalize message
+                    personalized_message = message.replace('{name}', subscriber['name'])
+                    
+                    # Add unsubscribe link (you'd need to implement this)
+                    personalized_message += f"\n\n---\nTo unsubscribe, reply with 'UNSUBSCRIBE' in the subject line."
+                    
+                    msg.attach(MIMEText(personalized_message, 'plain'))
+                    
+                    # Send email
+                    text = msg.as_string()
+                    server.sendmail(from_email, subscriber['email'], text)
+                    successful_sends += 1
+                    print(f"✓ Sent to {subscriber['name']} ({subscriber['email']})")
+                    
+                except Exception as e:
+                    print(f"✗ Failed to send to {subscriber['email']}: {str(e)}")
+                    failed_sends += 1
+            
+            server.quit()
+            print(f"\nEmail sending complete!")
+            print(f"Successful: {successful_sends}, Failed: {failed_sends}")
+            
+        except Exception as e:
+            print(f"SMTP connection error: {str(e)}")
+
+def main():
+    """Main function to demonstrate usage"""
+    ml = SimpleMailingList()
+    
+    print("Simple Mailing List Manager")
+    print("=" * 30)
+    
+    while True:
+        print("\nOptions:")
+        print("1. Add subscriber")
+        print("2. List subscribers")
+        print("3. Send email")
+        print("4. Export to CSV")
+        print("5. Remove subscriber")
+        print("6. Exit")
         
-        // Show export button on triple-click (admin feature)
-        let clickCount = 0;
-        document.addEventListener('click', function() {
-            clickCount++;
-            if (clickCount === 3) {
-                exportBtn.style.display = 'block';
-                exportBtn.style.position = 'fixed';
-                exportBtn.style.bottom = '20px';
-                exportBtn.style.right = '20px';
-                exportBtn.style.padding = '10px';
-                exportBtn.style.background = '#28a745';
-                exportBtn.style.color = 'white';
-                exportBtn.style.border = 'none';
-                exportBtn.style.borderRadius = '5px';
-                exportBtn.style.cursor = 'pointer';
-            }
-            setTimeout(() => clickCount = 0, 1000);
-        });
-    </script>
-</body>
-</html>
+        choice = input("\nEnter your choice (1-6): ").strip()
+        
+        if choice == '1':
+            name = input("Enter name: ").strip()
+            email = input("Enter email: ").strip()
+            success, message = ml.add_subscriber(name, email)
+            print(f"{'✓' if success else '✗'} {message}")
+        
+        elif choice == '2':
+            active_subs = ml.get_active_subscribers()
+            print(f"\nActive Subscribers ({len(active_subs)}):")
+            for i, sub in enumerate(active_subs, 1):
+                print(f"{i}. {sub['name']} - {sub['email']}")
+        
+        elif choice == '3':
+            if not ml.get_active_subscribers():
+                print("No subscribers to send to!")
+                continue
+                
+            subject = input("Enter email subject: ").strip()
+            print("Enter your message (use {name} for personalization):")
+            print("(Press Ctrl+D or Ctrl+Z when done)")
+            
+            message_lines = []
+            try:
+                while True:
+                    line = input()
+                    message_lines.append(line)
+            except EOFError:
+                pass
+            
+            message = '\n'.join(message_lines)
+            
+            print("\nEmail configuration:")
+            smtp_server = input("SMTP server (e.g., smtp.gmail.com): ").strip()
+            smtp_port = int(input("SMTP port (587 for TLS): ").strip() or "587")
+            username = input("Email username: ").strip()
+            password = input("Email password: ").strip()
+            from_email = input("From email address: ").strip()
+            
+            ml.send_email(subject, message, smtp_server, smtp_port, username, password, from_email)
+        
+        elif choice == '4':
+            filename = input("CSV filename (default: subscribers.csv): ").strip() or "subscribers.csv"
+            ml.export_to_csv(filename)
+            print(f"✓ Exported to {filename}")
+        
+        elif choice == '5':
+            email = input("Enter email to remove: ").strip()
+            ml.remove_subscriber(email)
+            print("✓ Subscriber removed")
+        
+        elif choice == '6':
+            print("Goodbye!")
+            break
+        
+        else:
+            print("Invalid choice. Please try again.")
+
+if __name__ == "__main__":
+    main()
